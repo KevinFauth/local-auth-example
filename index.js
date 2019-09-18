@@ -37,14 +37,14 @@ app.post('/login', (req, res) => {
 
   db.collection('users')
     .findOne({ username })
-    .then(db => {
+    .then(dbUser => {
       // if user doesn't exist, kick out
-      if (!db) return res.status(401).json({err:"invalid user/password"})
+      if (!dbUser) return res.status(401).json({err:"invalid user/password"})
 
       // check if passwords match
-      if (bcrypt.compareSync(password, db.password)) {
+      if (bcrypt.compareSync(password, dbUser.password)) {
         // update users session, return status
-        req.session.user = db
+        req.session.user = dbUser
         return res.json({
           s: "Logged in"
         })
@@ -72,8 +72,6 @@ app.get('/myData', (req, res) => {
     return res.status(403).json({s:"Not logged in"})
   }
 })
-
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 
 // run just once
 app.get('/createUsers', (req, res) => {
@@ -111,7 +109,11 @@ function connectToMongo() {
       console.log(err)
       if (err) return reject(err)
 
+      // #hack to save myself from typing this all the time
       db = client.db("test-app")
+
+      // only start allowing HTTP connections once the db connects
+      app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 
       return resolve(client)
     })
